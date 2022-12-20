@@ -2,9 +2,10 @@
 // @name            Hebrew-Arabic Dictionary AnkiConnect
 // @namespace       http://tampermonkey.net/
 // @version         0.3
-// @description     Add dictionary entries from Rothfarb's Hebrew-Arabic dictionary directly to Anki
+// @description     Add dictionary entries from Rothfarb's / Madrase Hebrew-Arabic dictionary directly to Anki
 // @author          idane
 // @match           https://rothfarb.info/ronen/arabic/*
+// @match           https://milon.madrasafree.com/*
 // @require         https://code.jquery.com/jquery-3.5.1.min.js
 // @require         https://cdn.jsdelivr.net/npm/axios@0.19.0/dist/axios.min.js
 // @require         https://cdn.jsdelivr.net/npm/axios-userscript-adapter@0.0.4/dist/axiosGmxhrAdapter.min.js
@@ -107,6 +108,7 @@ class AnkiConnectClient {
             "note is a duplicate, but the original was not found"
           );
         }
+        console.log(noteId);
       } else {
         throw e;
       }
@@ -144,6 +146,7 @@ class AnkiConnectClient {
     let query = `"deck:${deckName}"`;
 
     Object.keys(fields).forEach((key) => {
+      console.log(key);
       if (fields[key]) {
         query += `"${key.replace('"', '\\"')}:${fields[key].replace(
           '"',
@@ -205,11 +208,11 @@ function cleanText(text) {
 
 function extractPayloadFromElement(element) {
   const attrElement = $(element).find(".attr");
-  let arabicKey = ".arb > .harm";
+  let arabicKey = ".arb > div";
   let hebrewKey = ".heb";
-  let hebrewTransliterationKey = ".arb > .keter";
+  let hebrewTransliterationKey = ".arb > span";
   if (currentPage !== "word.asp") {
-    arabicKey = ".arb.harm";
+    arabicKey = ".arb:nth-of-type(2)";
     hebrewKey = ".heb > a";
     hebrewTransliterationKey = ".arb.keter";
   }
@@ -294,6 +297,7 @@ window.addEventListener(
           appendFieldIfExists(fields, "pluralityFieldName", payload.plurality);
           appendFieldIfExists(fields, "genderFieldName", payload.gender);
           const client = new AnkiConnectClient(ankiConnectUrl);
+          console.log({deckName, modelName, fields, "rothfarb": "rothfarb"})
           await client.addNote(deckName, modelName, fields, "rothfarb");
           $.toast({
             heading: "Success",
@@ -302,6 +306,7 @@ window.addEventListener(
             icon: "success",
           });
         } catch (e) {
+          console.log(e);
           $.toast({
             heading: "Error",
             text: e.message,
